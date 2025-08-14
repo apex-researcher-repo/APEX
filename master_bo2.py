@@ -2,10 +2,10 @@
 """
 Unified Multi-Objective Bayesian Optimization Script (Optimized Version)
 
-This script integrates three models (logistic, random forest, decision tree) and supports:
+This script integrates three models (logistic, random forest, decision tree, nn, random forest 2) and supports:
   - One GP implementation using BOtorch (with GPU support when available)
-  - Candidate generation methods (e.g. "dycors", "dycors_org", "sobol", etc.)
-  - Candidate selection methods (e.g. "pareto", "ehvi", "parego")
+  - Candidate generation methods ("apex", "dycors_org", "sobol")
+  - Candidate selection methods ("pareto", "ehvi", "parego")
   
 Reproducibility is enforced via fixed seeds and by placing all tensor operations on the proper device.
 """
@@ -50,7 +50,6 @@ warnings.filterwarnings("ignore")
 # ========================
 # Global settings for reproducibility and device management
 # ========================
-SEED = 42
 random.seed(SEED)
 np.random.seed(SEED)
 torch.manual_seed(SEED)
@@ -769,7 +768,7 @@ class UnifiedBO:
             cand2 = dycors_fi2(best_center, self.cand_size, self.lb, self.up, scalefactor=0.3, d=self.d, gp_models=self.gp_models)
             candidates = np.vstack([cand1, cand2])
             candidates = np.clip(candidates, self.lb, self.up)
-        elif self.cand_gen == "dycors_fi_auc2":
+        elif self.cand_gen == "dycors_fi_auc2":#apex
             top_centers = select_top2_centers_by_auc_reduction(self.Y, self.X)
             cand1 = dycors_fi2(top_centers[0], self.cand_size, self.lb, self.up, scalefactor=0.3, d=self.d, gp_models=self.gp_models)
             cand2 = dycors_fi2(top_centers[1], self.cand_size, self.lb, self.up, scalefactor=0.3, d=self.d, gp_models=self.gp_models)
@@ -945,8 +944,3 @@ def run_BO_scenario(model_type, cand_gen, cand_sel, batch_size, cand_size, total
         "auc_history": auc_history
     }
 
-# Uncomment to run directly:
-# if __name__ == "__main__":
-#     res = run_BO_scenario("logistic", "dycors_fi_auc1", "pareto", batch_size=1, cand_size=1500,
-#                           total_budget=150, output_dir="./fairpilot_results")
-#     print("Results:", res)
